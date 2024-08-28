@@ -1,0 +1,60 @@
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
+-- =============================================
+-- Author:      <>
+-- Create Date: <>
+-- Description: <Generates request body for refreshing the PBI datasets in a JSON format>
+-- Debug:
+-- =============================================
+CREATE PROCEDURE [mng].[SP_Create Dataset Refresh Request Body]
+(
+    @ExecutionType AS VARCHAR(15), -- 'Full' or 'Increment'
+    @Execute_A_Model AS BIT,
+    @Execute_B_Model AS BIT
+-- For future models just add @Execute_?_Model accordingly
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @JSON AS NVARCHAR(MAX);
+
+    -- IF 'Full' than run all tables **withot partitions**
+    IF @ExecutionType = 'Full'
+        SELECT
+            @JSON
+            = (
+                  SELECT
+                      [table]
+                  FROM [mng].[DatasetTablesRefreshManagement]
+                  WHERE ( @Execute_A_Model = 1 AND A_Model = 1 )
+                        OR ( @Execute_B_Model = 1 AND B_Model = 1 )
+                  -- For future models just add another OR clause accordingly
+                  FOR JSON PATH
+              );
+    -- ELSE run tables with their partitions
+    ELSE
+        SELECT
+            @JSON
+            = (
+                  SELECT
+                      [table],
+                      [partition]
+                  FROM [mng].[DatasetTablesRefreshManagement]
+                  WHERE ( @Execute_A_Model = 1 AND A_Model = 1 )
+                        OR ( @Execute_B_Model = 1 AND B_Model = 1 )
+                  -- For future models just add another OR clause accordingly
+                  FOR JSON PATH
+              );
+
+ -- Note: You can always modify the body as needed, following the guidelines in the Microsoft documentation
+    SELECT
+        CONCAT(
+                  '{"notifyOption": "NoNotification", "objects": ',
+                  @JSON,
+                  ', "type": "Full", "commitMode": "Transactional",}'
+              ) AS body;
+
+END;
