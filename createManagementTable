@@ -1,0 +1,24 @@
+SET ANSI_NULLS ON;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+CREATE TABLE [mng].[DatasetTablesRefreshManagement]
+(
+    [ID] [INT] IDENTITY(1, 1) NOT NULL,
+    [table] [NVARCHAR](50) NOT NULL,
+    [partition] [NVARCHAR](255) NULL,
+    [A_Model] [BIT] NOT NULL,
+    [B_Model] [BIT] NOT NULL
+) ON [PRIMARY];
+GO
+
+-- Simple example
+INSERT INTO [mng].[DatasetTablesRefreshManagement] ( [table], [partition], [A_Model], [B_Model] )
+VALUES
+( 'FactA', NULL, 1, 0 ),
+( 'FactB', 'Some_Partition', 0, 1 ),
+( 'DimA', NULL, 1, 1 ),
+( 'DimB', NULL, 1, 1 );
+GO
